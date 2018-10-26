@@ -2,6 +2,8 @@ extends layout
 
 block content
   form(method="post", action="/schedules").my-3
+    //- csrfという名前のパラメータを与えることで、csrfモジュールのチェックを行うことが出来る
+    input(type="hidden" name="_csrf" value!=csrfToken)
     div.form-group
       label(for="scheduleName") 予定名
       input(type="text" name="scheduleName")#scheduleName.form-control

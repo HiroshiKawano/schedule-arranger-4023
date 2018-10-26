@@ -8,14 +8,18 @@ const Candidate = require('../models/candidate');
 const User = require('../models/user');
 const Availability = require('../models/availability');
 const Comment = require('../models/comment');
+const csrf = require('csurf'); //csrfモジュール読み込み
+const csrfProtection = csrf({ cookie: true }); // cookie使用
 
-router.get('/new', authenticationEnsurer, (req, res, next) => {
-  res.render('new', { user: req.user });
+// getで/schedules/newにアクセスがされた時、csrfチェックをする
+router.get('/new',authenticationEnsurer, csrfProtection, (req, res, next) => {
+  // Express用csrfToken()関数とする
+  res.render('new', { user: req.user, csrfToken: req.csrfToken()});
 });
-
-router.post('/', authenticationEnsurer, (req, res, next) => {
-  const scheduleId = uuid.v4();
-  const updatedAt = new Date();
+//postでschedules/newからデータを渡された時の処理
+router.post('/', authenticationEnsurer, csrfProtection, (req, res, next) => {
+  const scheduleId = uuid.v4();　//予定ScheduleのIDとしてUUIDを生成
+  const updatedAt = new Date();  //更新日時として現在時刻を設定
   Schedule.create({
     scheduleId: scheduleId,
     scheduleName: req.body.scheduleName.slice(0, 255),
@@ -120,24 +124,26 @@ router.get('/:scheduleId', authenticationEnsurer, (req, res, next) => {
   });
 });
 
-router.get('/:scheduleId/edit', authenticationEnsurer, (req, res, next) => {
+router.get('/:scheduleId/edit', authenticationEnsurer,csrfProtection, (req, res, next) =>{
   Schedule.findOne({
     where: {
       scheduleId: req.params.scheduleId
     }
-  }).then((schedule) => {
+  }).then((schedule) => {　// 閲覧中ユーザーとスケジュール作成者が同じなら
     if (isMine(req, schedule)) { // 作成者のみが編集フォームを開ける
-      Candidate.findAll({
+      Candidate.findAll({ // scheduleIdと紐付いている候補日を全て取得する
         where: { scheduleId: schedule.scheduleId },
         order: [['"candidateId"', 'ASC']]
-      }).then((candidates) => {
-        res.render('edit', {
+      }).then((candidates) => {　//取得できたら
+        res.render('edit', {　// edit.pugテンプレートを適用してhtmlを描画する
           user: req.user,
           schedule: schedule,
-          candidates: candidates
+          candidates: candidates,
+          csrfToken: req.csrfToken()　//csrf対策用トークンを渡す
         });
       });
-    } else {
+      //閲覧中ユーザーとスケジュール作成者が違うなら
+    } else { //エラーを投げる
       const err = new Error('指定された予定がない、または、予定する権限がありません');
       err.status = 404;
       next(err);
@@ -148,8 +154,8 @@ router.get('/:scheduleId/edit', authenticationEnsurer, (req, res, next) => {
 function isMine(req, schedule) {
   return schedule && parseInt(schedule.createdBy) === parseInt(req.user.id);
 }
-
-router.post('/:scheduleId', authenticationEnsurer, (req, res, next) => {
+// 編集と削除時のフォームの表示の時はCSRF対策のトークンを渡しPOSTリクエスト時にチェックする
+router.post('/:scheduleId', authenticationEnsurer, csrfProtection, (req, res, next) => {
   Schedule.findOne({
     where: {
       scheduleId: req.params.scheduleId
