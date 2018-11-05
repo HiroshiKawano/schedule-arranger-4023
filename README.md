@@ -6,4 +6,3 @@
 <p> クロスサイト・リクエストフォージェリ </p>
 <p> クリックジァッキング </p>
 <p> CSRF </p>
-<img https://user-images.githubusercontent.com/39044771/48022020-5a7b6d00-e17d-11e8-89cc-c464147c1460.png) >
