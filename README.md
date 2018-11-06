@@ -1,4 +1,4 @@
-# JQuery+Express+SQL+Bootstrap:脆弱性対策済み
+# JQuery+Express+SQL+Bootstrap:脆弱性対策済み (ISC License)
 <p> ● SQLインジェクション→【sequelizeでDB操作】</p>
 <p> ● ディレクトリ・トラバーサル→【ExpressのRouterオブジェクトを介してルーティング】 </p>
 <p> ● XSS→【pugテンプレートを使用してHTMLを描画】　</p>
